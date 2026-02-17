@@ -4,10 +4,11 @@ A simple flask app that serves as a recorder of youtube streams.
 
 ## Installation
 
-Install flask and toml/tomllib.
+Install flask, toml/tomllib and yt-dlp.
 
 ```bash
 sudo pacman -S python-flask
+sudo pacman -S yt-dlp
 ```
 
 ## Problems
