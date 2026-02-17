@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Stream Recorder</title>
+	<style>
+		body { font-family: monospace; padding: 20px; background: #f0f0f0; }
+		h1 { font-size: 1.5rem; margin-bottom: 5px; }
+		.info { font-size: 0.9rem; color: #666; margin-bottom: 20px; }
+		table { border-collapse: collapse; width: 100%; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+		th { text-align: left; padding: 12px; background: #333; color: white; }
+		td { text-align: left; padding: 12px; border-bottom: 1px solid #ddd; vertical-align: top;}
+
+		.state-Recording { color: #d32f2f; font-weight: bold; }
+		.state-Idle { color: #388e3c; }
+		.state-Crashed { color: #f57c00; font-weight: bold; }
+		.state-Error { color: #c62828; font-weight: bold; }
+
+		.message { font-size: 0.8rem; color: #555; display: block; margin-top: 4px; }
+	</style>
+</head>
+<body>
+	<h1>Scheduled Recordings</h1>
+	<div class="info">
+		Server Time: {{ server_time }} <br>
+		System yt-dlp: {{ yt_dlp_status }} <br>
+		Cookies: {{ auth_status }}
+	</div>
+	<table>
+		<thead>
+			<tr>
+				<th>Name</th>
+				<th>Link</th>
+				<th>Schedule</th>
+				<th>Status</th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for stream in streams %}
+			<tr>
+				<td>{{ stream.name }}</td>
+				<td>{{ stream.link }}</td>
+				<td>{{ stream.schedule }}</td>
+				<td>
+					<span class="state-{{ stream.state }}">{{ stream.state }}</span>
+					<span class="message">{{ stream.message }}</span>
+				</td>
+			</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<script>
+		function updateStatus() {
+			fetch('/status')
+				.then(response => response.json())
+				.then(data => {
+					//update time
+					document.querySelector('.info').innerHTML = `
+						Server Time: ${data.server_time} <br>
+						System yt-dlp: {{ yt_dlp_status }} <br>
+						Cookies: {{ auth_status }}
+					`;
+
+					//update table rows
+					const tableBody = document.querySelector('table tbody');
+					tableBody.innerHTML = data.streams.map(stream => `
+						<tr>
+							<td>${stream.name}</td>
+							<td>${stream.link}</td>
+							<td>${stream.schedule}</td>
+							<td>
+								<span class="state-${stream.state}">${stream.state}</span>
+								<span class="message">${stream.message}</span>
+							</td>
+						</tr>
+					`).join('');
+				})
+				.catch(error => console.error('Error fetching status:', error));
+		}
+
+		setInterval(updateStatus, 5000);
+	</script>
+</body>
+</html>

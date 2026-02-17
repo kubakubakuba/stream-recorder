@@ -1,0 +1,14 @@
+[Unit]
+Description=Stream recorder
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/opt/stream-recorder
+ExecStart=/usr/bin/python3 /opt/stream-recorder/app.py
+Restart=always
+RestartSec=10
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
