@@ -22,7 +22,7 @@ COOKIES_FILE_DEFAULT = 'www.youtube.com_cookies.txt'
 RECORDING_DIR = 'recordings'
 POLL_INTERVAL = 10
 YT_DLP_EXEC = shutil.which("yt-dlp")
-YT_DLP_ARGS = [	"-f", "bestvideo+bestaudio",
+YT_DLP_ARGS = [	"-f", "bestvideo+bestaudio/best",
 				"--merge-output-format", "mkv",
 				"--no-warnings",
 				"--retries", "10",
