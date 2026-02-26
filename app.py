@@ -19,11 +19,14 @@ app = Flask(__name__)
 
 CONFIG_FILE = 'config.toml'
 COOKIES_FILE_DEFAULT = 'www.youtube.com_cookies.txt'
-RECORDING_DIR = 'recordings'
-POLL_INTERVAL = 10
+
+#RECORDING_DIR = 'recordings'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+RECORDING_DIR = os.path.join(BASE_DIR, 'recordings')
+
+POLL_INTERVAL = 30
 YT_DLP_EXEC = shutil.which("yt-dlp")
 YT_DLP_ARGS = [	"-f", "bestvideo+bestaudio/best",
-				"--merge-output-format", "mkv",
 				"--no-warnings",
 				"--retries", "10",
 				"--fragment-retries", "10",
@@ -31,6 +34,8 @@ YT_DLP_ARGS = [	"-f", "bestvideo+bestaudio/best",
 
 active_processes = {}
 stream_status = {}
+config_cache = None
+config_mtime = None
 
 if not os.path.exists(RECORDING_DIR):
 	os.makedirs(RECORDING_DIR)
@@ -56,13 +61,30 @@ def get_cookie_file():
 	return None
 
 def load_config():
+	global config_cache, config_mtime
+	
 	try:
+		if not os.path.exists(CONFIG_FILE):
+			print(f"Config file not found: {CONFIG_FILE}", file=sys.stderr)
+			return {"streams": []}
+		
+		current_mtime = os.path.getmtime(CONFIG_FILE)
+		
+		if config_cache is not None and config_mtime == current_mtime:
+			return config_cache
+		
 		mode = 'rb' if USING_TOMLLIB else 'r'
 		with open(CONFIG_FILE, mode) as f:
 			if USING_TOMLLIB:
-				return tomllib.load(f)
+				new_config = tomllib.load(f)
 			else:
-				return toml.load(f)
+				new_config = toml.load(f)
+		
+		config_cache = new_config
+		config_mtime = current_mtime
+		print(f"Config loaded/reloaded at {datetime.now().strftime('%H:%M:%S')}")
+		
+		return new_config
 	except Exception as e:
 		print(f"Error loading config: {e}", file=sys.stderr)
 		return {"streams": []}
@@ -103,7 +125,7 @@ def start_recording(stream_index, stream_conf):
 			cmd,
 			preexec_fn=os.setsid,
 			stdout=subprocess.DEVNULL,
-			stderr=subprocess.PIPE,
+			stderr=subprocess.DEVNULL,
 			text=True,
 			env=env
 		)
@@ -250,4 +272,4 @@ def api_status():
 	})
 
 if __name__ == '__main__':
-	app.run(host='0.0.0.0', port=5005)
+	app.run(host='0.0.0.0', port=80)
